@@ -1,0 +1,27 @@
+{
+  "CP01_LOGIN_VALIDO": {
+    "expectedGreeting": "Welcome"
+  },
+  "CP02_PAGO_VALIDO": {
+    "payeeName": "Name001",
+    "address": "Address0001",
+    "city": "City001",
+    "state": "State01",
+    "zipCode": "17001",
+    "phone": "0999999001",
+    "account": "111001",
+    "verifyAccount": "111001",
+    "amount": "15.50"
+  },
+  "CP03_MONTO_CERO": {
+    "payeeName": "Name002",
+    "address": "Address0002",
+    "city": "City002",
+    "state": "State01",
+    "zipCode": "17002",
+    "phone": "0999999002",
+    "account": "111002",
+    "verifyAccount": "111002",
+    "amount": "0"
+  }
+}
