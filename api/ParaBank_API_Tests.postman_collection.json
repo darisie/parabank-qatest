@@ -1,0 +1,189 @@
+{
+  "info": {
+    "_postman_id": "6c680111-1e01-4e72-b520-f3442025adb2",
+    "name": "Parabank - QA API test",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "18710504",
+    "_collection_link": "https://go.postman.co/collection/18710504-6c680111-1e01-4e72-b520-f3442025adb2?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Get Customer Accounts",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// 1. Aserción de estado HTTP\r\npm.test(\"Status code is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\n// 2. Aserción de contenido y estructura de respuesta\r\npm.test(\"Validar estructura de la respuesta JSON\", function () {\r\n    var jsonData = pm.response.json();\r\n    pm.expect(jsonData).to.be.an(\"array\");\r\n    pm.expect(jsonData.length).to.be.above(0);\r\n    pm.expect(jsonData[0]).to.have.property(\"id\");\r\n    pm.expect(jsonData[0]).to.have.property(\"customerId\");\r\n    pm.expect(jsonData[0]).to.have.property(\"type\");\r\n    pm.expect(jsonData[0]).to.have.property(\"balance\");\r\n});\r\n\r\n// 3. Verificación de datos del negocio\r\npm.test(\"Regla de negocio: Cuenta activa asociada al cliente con saldo válido\", function () {\r\n    var jsonData = pm.response.json();\r\n    var customerIdEsperado = Number(pm.environment.get(\"customerId\"));\r\n\r\n    pm.expect(jsonData[0].customerId).to.eql(customerIdEsperado);\r\n    pm.expect(jsonData[0].type).to.eql(\"CHECKING\");\r\n    pm.expect(jsonData[0].balance).to.be.a(\"number\");\r\n\r\n    // Guarda el ID de cuenta real en el entorno para encadenar la siguiente petición\r\n    pm.environment.set(\"accountId\", jsonData[0].id);\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/customers/:customerId/accounts",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "customers",
+            ":customerId",
+            "accounts"
+          ],
+          "variable": [
+            {
+              "key": "customerId",
+              "value": "{{customerId}}",
+              "description": "Customer's id"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "default response",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/xml"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/customers/:customerId/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "customers",
+                ":customerId",
+                "accounts"
+              ],
+              "variable": [
+                {
+                  "key": "customerId",
+                  "value": "5479",
+                  "description": "Customer's id"
+                }
+              ]
+            }
+          },
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "[\n  {\n    \"id\": 8289,\n    \"customerId\": 2206,\n    \"type\": \"LOAN\",\n    \"balance\": 6429.306579867644\n  },\n  {\n    \"id\": 5555,\n    \"customerId\": 1398,\n    \"type\": \"SAVINGS\",\n    \"balance\": 7729.362364901984\n  }\n]"
+        }
+      ]
+    },
+    {
+      "name": "Get the list of Transactions for the account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// 1. Aserción de estado HTTP\r\npm.test(\"Status code is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\n// 2. Aserción de contenido y estructura de respuesta\r\npm.test(\"Validar estructura del listado de transacciones\", function () {\r\n    var jsonData = pm.response.json();\r\n    pm.expect(jsonData).to.be.an(\"array\");\r\n    pm.expect(jsonData.length).to.be.above(0);\r\n\r\n    var ultimaTransaccion = jsonData[jsonData.length - 1];\r\n    pm.expect(ultimaTransaccion).to.have.property(\"id\");\r\n    pm.expect(ultimaTransaccion).to.have.property(\"accountId\");\r\n    pm.expect(ultimaTransaccion).to.have.property(\"type\");\r\n    pm.expect(ultimaTransaccion).to.have.property(\"date\");\r\n    pm.expect(ultimaTransaccion).to.have.property(\"amount\");\r\n    pm.expect(ultimaTransaccion).to.have.property(\"description\");\r\n});\r\n\r\n// 3. Verificación de datos del negocio\r\npm.test(\"Regla de negocio: Movimiento corresponde a la cuenta y registra el débito del pago\", function () {\r\n    var jsonData = pm.response.json();\r\n    var accountIdEsperado = Number(pm.environment.get(\"accountId\"));\r\n    var ultimaTransaccion = jsonData[jsonData.length - 1];\r\n\r\n    pm.expect(ultimaTransaccion.accountId).to.eql(accountIdEsperado);\r\n    pm.expect(ultimaTransaccion.type).to.eql(\"Debit\");\r\n    pm.expect(ultimaTransaccion.amount).to.be.above(0);\r\n    pm.expect(ultimaTransaccion.description).to.include(\"Bill Payment\");\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/accounts/:accountId/transactions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "accounts",
+            ":accountId",
+            "transactions"
+          ],
+          "variable": [
+            {
+              "key": "accountId",
+              "value": "{{accountId}}",
+              "description": "Account id"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "default response",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/xml"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/:accountId/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                ":accountId",
+                "transactions"
+              ],
+              "variable": [
+                {
+                  "key": "accountId",
+                  "value": "5479",
+                  "description": "Account id"
+                }
+              ]
+            }
+          },
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "cookie": [],
+          "body": "[\n  {\n    \"id\": 5739,\n    \"accountId\": 208,\n    \"type\": \"Debit\",\n    \"date\": \"1996-11-18T00:27:43.124Z\",\n    \"amount\": 4775.114079245008,\n    \"description\": \"string\"\n  },\n  {\n    \"id\": 3387,\n    \"accountId\": 5270,\n    \"type\": \"Debit\",\n    \"date\": \"2025-10-27T11:33:41.006Z\",\n    \"amount\": 2160.7633066748554,\n    \"description\": \"string\"\n  }\n]"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": ""
+    },
+    {
+      "key": "customerId",
+      "value": ""
+    },
+    {
+      "key": "accountId",
+      "value": ""
+    }
+  ]
+}

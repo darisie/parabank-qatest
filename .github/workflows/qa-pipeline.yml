@@ -1,0 +1,77 @@
+
+name: QA Automation Pipeline - ParaBank
+
+on:
+  push:
+    branches:
+      - deployment
+
+  pull_request:
+    branches:
+      - deployment
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa-tests:
+    name: Playwright E2E and Newman API Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Configure Node.js
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 3. Install Playwright dependencies
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      # 4. Install Chromium
+      - name: Install Playwright Chromium
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      # 5. Execute E2E tests
+      - name: Run Playwright E2E Tests
+        working-directory: web
+        env:
+          PARABANK_USER: ${{ secrets.PARABANK_USER }}
+          PARABANK_PASS: ${{ secrets.PARABANK_PASS }}
+          CI: true
+        run: npx playwright test --project=chromium
+
+      # 6. Execute API tests
+      - name: Run API Tests with Newman
+        if: always()
+        env:
+          CI: true
+        run: |
+          mkdir -p evidencias
+
+          npx --yes newman@6 run api/ParaBank_API_Tests.postman_collection.json \
+            -e api/Parabank_testenv.postman_environment.json \
+            --reporters cli,json \
+            --reporter-json-export evidencias/api-report.json
+
+      # 7. Upload test reports
+      - name: Upload QA Reports and Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-execution-reports
+          path: |
+            web/playwright-report/
+            web/test-results/
+            evidencias/api-report.json
+          retention-days: 7
+          if-no-files-found: warn
